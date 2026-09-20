@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-export const SERVER_URL = "http://localhost:3000";
+export const SERVER_URL = "https://binaire-server.onrender.com";
 export const socket = io(SERVER_URL, { autoConnect: true });
 
 export function getClientId() {
