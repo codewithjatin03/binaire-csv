@@ -32,11 +32,6 @@ export default function FileCard({ job, mine }) {
           <div className="font-medium text-sm truncate max-w-[220px]">
             {job.originalName || job.name}
           </div>
-          <div className="flex gap-2 text-[11px] text-gray-500 font-mono mt-1">
-            <span>{mine ? "you" : job.clientId}</span>
-            {job.processId && <span className={job.status === "processing" ? "animate-pulse" : ""}>{job.processId}</span>}
-            {job.aged && <span className="text-amber">aged ↑</span>}
-          </div>
         </div>
         <div className="flex items-center gap-2">
           {job.priority && (
