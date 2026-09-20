@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-export const SERVER_URL = "http://localhost:3000";
+export const SERVER_URL = "https://binaire-server.onrender.com";
 export const socket = io(SERVER_URL, { autoConnect: true });
 
 export function getClientId() {
@@ -18,7 +18,10 @@ export async function uploadFile(file, priority, clientId) {
   form.append("priority", priority);
   form.append("clientId", clientId);
 
-  const res = await fetch(`${SERVER_URL}/api/upload`, { method: "POST", body: form });
+  const res = await fetch(`${SERVER_URL}/api/upload`, {
+    method: "POST",
+    body: form,
+  });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Upload failed");
   return data;
