@@ -3,14 +3,14 @@ import { socket, uploadFile } from "../socket.js";
 import FileCard from "./FileCard.jsx";
 
 export default function UploadPanel({ clientId, myUploads, setMyUploads }) {
-  // ye files hain jo select ho chuki hain par abhi upload NAHI hui
-  const [staged, setStaged] = useState([]); // [{ localId, file, priority }]
+
+  const [staged, setStaged] = useState([]);
 
   function addFiles(fileList) {
     const newOnes = Array.from(fileList).map((file) => ({
       localId: `local_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       file,
-      priority: "low", // default, user badal sakta hai
+      priority: "low", 
     }));
     setStaged((prev) => [...prev, ...newOnes]);
   }
@@ -25,14 +25,27 @@ export default function UploadPanel({ clientId, myUploads, setMyUploads }) {
 
   async function handleUploadAll() {
     const toUpload = staged;
-    setStaged([]); // staging list khali kar do, ab actual upload shuru
+    setStaged([]);
 
     for (const item of toUpload) {
       const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      setMyUploads((prev) => [
-        { id: tempId, originalName: item.file.name, status: "uploading", priority: item.priority },
-        ...prev,
-      ]);
+      setMyUploads(prev => {
+        const updated = [
+          {
+            id: tempId,
+            originalName: item.file.name,
+            status: "uploading",
+            priority: item.priority,
+          },
+          ...prev,
+        ];
+
+        return updated.sort((a, b) => {
+          if (a.priority === "high" && b.priority !== "high") return -1;
+          if (a.priority !== "high" && b.priority === "high") return 1;
+          return 0;
+        });
+      });
       socket.emit("file:uploading", { clientId, tempId, name: item.file.name });
 
       try {
@@ -62,7 +75,6 @@ export default function UploadPanel({ clientId, myUploads, setMyUploads }) {
         />
       </label>
 
-      {/* Staged files - abhi upload nahi hui, yahan priority set karo */}
       {staged.length > 0 && (
         <div className="mt-4 flex flex-col gap-2">
           {staged.map((item) => (
