@@ -10,7 +10,7 @@ export default function UploadPanel({ clientId, myUploads, setMyUploads }) {
     const newOnes = Array.from(fileList).map((file) => ({
       localId: `local_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       file,
-      priority: "low", 
+      priority: "low",
     }));
     setStaged((prev) => [...prev, ...newOnes]);
   }
@@ -24,12 +24,20 @@ export default function UploadPanel({ clientId, myUploads, setMyUploads }) {
   }
 
   async function handleUploadAll() {
-    const toUpload = staged;
+    const toUpload = [...staged].sort((a, b) => {
+      if (a.priority === "high" && b.priority !== "high") return -1;
+      if (a.priority !== "high" && b.priority === "high") return 1;
+      return 0;
+    });
+
     setStaged([]);
 
     for (const item of toUpload) {
-      const tempId = `temp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      setMyUploads(prev => {
+      const tempId = `temp_${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 6)}`;
+
+      setMyUploads((prev) => {
         const updated = [
           {
             id: tempId,
@@ -46,16 +54,48 @@ export default function UploadPanel({ clientId, myUploads, setMyUploads }) {
           return 0;
         });
       });
-      socket.emit("file:uploading", { clientId, tempId, name: item.file.name });
+
+      socket.emit("file:uploading", {
+        clientId,
+        tempId,
+        name: item.file.name,
+      });
 
       try {
-        const { jobId } = await uploadFile(item.file, item.priority, clientId);
+        const { jobId } = await uploadFile(
+          item.file,
+          item.priority,
+          clientId
+        );
+
         setMyUploads((prev) =>
-          prev.map((j) => (j.id === tempId ? { ...j, id: jobId, status: "uploaded" } : j))
+          prev
+            .map((j) =>
+              j.id === tempId
+                ? {
+                  ...j,
+                  id: jobId,
+                  status: "uploaded",
+                }
+                : j
+            )
+            .sort((a, b) => {
+              if (a.priority === "high" && b.priority !== "high") return -1;
+              if (a.priority !== "high" && b.priority === "high") return 1;
+              return 0;
+            })
         );
       } catch (err) {
         setMyUploads((prev) =>
-          prev.map((j) => (j.id === tempId ? { ...j, status: "failed", error: err.message } : j))
+          prev.map((j) =>
+            j.id === tempId
+              ? {
+                ...j,
+                status: "failed",
+                error: err.message,
+              }
+              : j
+          )
         );
       }
     }
